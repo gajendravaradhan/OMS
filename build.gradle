@@ -1,0 +1,131 @@
+plugins {
+	id 'org.springframework.boot' version '2.2.5.RELEASE'
+	id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+	id 'java'
+	id 'com.google.protobuf' version '0.8.11'
+	id 'idea'
+	id 'application'
+	id 'jacoco'
+}
+
+group = 'com.trp.onboarding'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+def grpcVersion = '1.28.0' // CURRENT_GRPC_VERSION
+def protobufVersion = '3.11.0'
+def protocVersion = protobufVersion
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	maven{
+		url "https://maven-central.storage-download.googleapis.com/repos/central/data/"
+	}
+	maven {
+		url 'https://jitpack.io'
+	}
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.flywaydb:flyway-core'
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	runtimeOnly 'com.h2database:h2'
+	//runtimeOnly 'org.postgresql:postgresql'
+
+	//grpc protobuf
+	implementation 'net.devh:grpc-spring-boot-starter:2.7.0.RELEASE'
+	implementation "io.grpc:grpc-netty:${grpcVersion}"
+	implementation 'net.devh:grpc-server-spring-boot-starter:2.7.0.RELEASE'
+	implementation group: 'com.google.api.grpc', name: 'proto-google-common-protos', version: '1.5.0'
+	implementation "io.grpc:grpc-stub:${grpcVersion}"
+	implementation "io.grpc:grpc-services:${grpcVersion}"
+	implementation "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
+	implementation "io.grpc:grpc-protobuf:${grpcVersion}"
+	implementation "com.google.protobuf:protobuf-java:3.10.0"
+	implementation 'com.google.protobuf:protobuf-gradle-plugin:0.8.11'
+	implementation "com.google.protobuf:protobuf-java-util:${protobufVersion}"
+	implementation "com.networknt:json-schema-validator:1.0.36"
+	runtimeOnly "io.grpc:grpc-netty-shaded:${grpcVersion}"
+
+	testImplementation "io.grpc:grpc-testing:${grpcVersion}"
+	testImplementation('org.junit.jupiter:junit-jupiter-api:5.2.0')
+	testImplementation('org.junit.jupiter:junit-jupiter-params:5.2.0')
+	testRuntimeOnly('org.junit.jupiter:junit-jupiter-engine:5.2.0')
+	testImplementation "org.mockito:mockito-core:2.+"
+	testImplementation('org.mockito:mockito-junit-jupiter:2.18.3')
+
+	testImplementation('org.springframework.boot:spring-boot-starter-test') {
+		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+	}
+}
+
+protobuf {
+	protoc {
+		artifact = "com.google.protobuf:protoc:${protocVersion}"
+	}
+	plugins {
+		grpc { artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}" }
+	}
+	generateProtoTasks.generatedFilesBaseDir = 'src/main/java/com/trp/onboarding/oms/'
+	generateProtoTasks {
+		all()*.plugins { grpc {} }
+	}
+}
+
+mainClassName = "com.trp.onboarding.OMS.OmsApplication"
+sourceSets {
+	main {
+		proto {
+			// In addition to the default 'src/main/proto'
+			//srcDir 'src/main/grpc'
+			//srcDir 'src/main/java/'
+			// In addition to the default '**/*.proto' (use with caution).
+			// Using an extension other than 'proto' is NOT recommended,
+			// because when proto files are published along with class files, we can
+			// only tell the type of a file from its extension.
+			include '**/*.protodevel'
+		}
+		java {
+			srcDir 'src/main/java/com/trp/onboarding/rpc/proto'
+		}
+	}
+}
+
+test {
+	useJUnitPlatform()
+}
+
+jacoco {
+	toolVersion = "0.8.5"
+	reportsDir = file("$buildDir/jacocoReportDir")
+}
+
+jacocoTestReport {
+	reports {
+		xml.enabled false
+		csv.enabled false
+		html.destination file("${buildDir}/jacocoHtml")
+	}
+	afterEvaluate {
+		classDirectories.setFrom(files(classDirectories.files.collect {
+			fileTree(dir: it,
+					exclude: ['**/protoGenerated/**',
+							'/com/trp/onboarding/OMS/business/domain/',
+							  '/com/trp/onboarding/OMS/dao/',
+							'/com/trp/onboarding/OMS/OmsApplication.class',
+							'/com/trp/onboarding/OMS/application/edgecomponents/**'
+							  ])
+		}))
+	}
+}

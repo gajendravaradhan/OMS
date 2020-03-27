@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package protoGenerated;
+option java_package = "protoGenerated";
+option java_multiple_files = true;
+
+service OrderService {
+    rpc executeOrder(Order) returns (AcknowledgeReceipt) {}
+    rpc getOrderByID(Order) returns (Order) {}
+}
+
+message Order {
+    string id = 1;
+    string userEmail = 2;
+    google.protobuf.Timestamp orderTime = 3;
+    string ticker = 4;
+    string direction = 5;
+    double price = 6;
+    int32 quantity = 7;
+}
+
+message AcknowledgeReceipt {
+    string message = 1;
+}

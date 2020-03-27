@@ -1,0 +1,9 @@
+CREATE TABLE ORDERS (
+    id UUID NOT NULL PRIMARY KEY,
+    userEmail VARCHAR(100) NOT NULL,
+    orderTime TIMESTAMP NOT NULL,
+    ticker VARCHAR(10) NOT NULL,
+    direction VARCHAR(1) NOT NULL,
+    price NUMERIC (5, 2) NOT NULL,
+    quantity INTEGER NOT NULL
+);
